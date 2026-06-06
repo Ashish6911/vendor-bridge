@@ -1,351 +1,1053 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JWT Store Demo</title>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>VendorBridge — Procurement</title>
+        <style>
+            :root{
+                --bg:#0f172a;
+                --panel:#0b1220;
+                --muted:#93b0d8;
+                --accent:#4f46e5;
+                --accent-soft:#7c3aed;
+                --glass: rgba(255,255,255,0.05);
+                --card-radius:18px;
+                --max-width:1320px;
+                --gap:20px;
+                font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            }
 
-<style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Segoe UI',sans-serif;
-}
+            html,body{height:100%;}
+            body{
+                margin:0;
+                min-height:100%;
+                background:radial-gradient(circle at top left, rgba(79,70,229,0.22), transparent 20%), linear-gradient(180deg,var(--bg),#071021);
+                color:#e6eef8;
+                -webkit-font-smoothing:antialiased;
+                -moz-osx-font-smoothing:grayscale;
+            }
 
-body{
-    min-height:100vh;
-    background:linear-gradient(135deg,#0f172a,#1e293b,#312e81);
-    color:white;
-}
+            .app{
+                max-width:var(--max-width);
+                margin:28px auto;
+                display:grid;
+                grid-template-columns:280px minmax(0,1fr);
+                gap:var(--gap);
+                padding:20px;
+            }
 
-.wrapper{
-    width:95%;
-    max-width:1200px;
-    margin:auto;
-    padding:30px;
-}
+            /* Sidebar */
+            .sidebar{
+                background:radial-gradient(circle at top left, rgba(79,70,229,0.18), transparent 34%), var(--panel);
+                border-radius:var(--card-radius);
+                padding:24px;
+                border:1px solid rgba(255,255,255,0.06);
+                box-shadow:0 24px 70px rgba(0,0,0,0.28);
+                position:sticky;
+                top:20px;
+                min-height:calc(100vh - 60px);
+            }
+            .brand{
+                font-size:22px;
+                font-weight:800;
+                color:#fff;
+                margin-bottom:16px;
+            }
+            .brand span{color:var(--accent);}
+            .nav{display:flex;flex-direction:column;gap:10px;}
+            .nav a{
+                display:flex;
+                align-items:center;
+                gap:10px;
+                padding:14px 16px;
+                border-radius:14px;
+                color:var(--muted);
+                text-decoration:none;
+                font-weight:700;
+                transition:background 0.2s ease,color 0.2s ease;
+            }
+            .nav a.active, .nav a:hover{
+                background:rgba(255,255,255,0.07);
+                color:#fff;
+            }
+            .status-pill{
+                display:inline-flex;
+                align-items:center;
+                gap:8px;
+                padding:10px 14px;
+                border-radius:999px;
+                background:rgba(255,255,255,0.05);
+                color:#cbd5e1;
+                margin-top:18px;
+                font-size:13px;
+            }
 
-.container{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:30px;
-}
+            /* Main */
+            .main{
+                padding:20px;
+                border-radius:var(--card-radius);
+                background:rgba(255,255,255,0.04);
+                border:1px solid rgba(255,255,255,0.06);
+                box-shadow:0 30px 90px rgba(0,0,0,0.22);
+                display:grid;
+                grid-template-columns:minmax(0,1fr) 320px;
+                gap:22px;
+                min-height:calc(100vh - 56px);
+            }
+            .topbar{
+                display:flex;
+                justify-content:space-between;
+                align-items:flex-end;
+                gap:20px;
+                margin-bottom:18px;
+            }
+            .welcome{font-size:26px;font-weight:800;letter-spacing:-0.03em;}
+            .role{color:var(--muted);font-size:14px;}
+            .page-grid{display:grid;gap:22px;}
+            .page-content{display:grid;gap:20px;}
+            .workspace-panel{display:grid;gap:20px;}
 
-.card{
-    background:rgba(255,255,255,0.08);
-    backdrop-filter:blur(15px);
-    border:1px solid rgba(255,255,255,0.15);
-    border-radius:25px;
-    padding:35px;
-    box-shadow:0 8px 32px rgba(0,0,0,0.4);
-}
+            .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;}
+            .card{
+                background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+                padding:22px;
+                border-radius:20px;
+                border:1px solid rgba(255,255,255,0.06);
+                box-shadow:0 18px 45px rgba(0,0,0,0.16);
+            }
+            form{display:grid;gap:14px;}
+            .card header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;gap:12px;}
+            .card header .label{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;font-weight:700;}
+            .card h3{margin:0 0 14px 0;font-size:20px;}
+            .summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+            .summary-item{
+                background:rgba(255,255,255,0.05);
+                padding:18px;
+                border-radius:16px;
+                border:1px solid rgba(255,255,255,0.05);
+            }
+            .summary-item span{display:block;}
+            .summary-label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;font-weight:600;}
+            .summary-value{font-size:22px;font-weight:800;}
 
-h1{
-    text-align:center;
-    margin-bottom:20px;
-}
+            form .row{display:flex;gap:10px;margin-bottom:12px;}
+            input[type=text], input[type=password], select{
+                width:100%;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.08);
+                background:rgba(255,255,255,0.05);color:inherit;
+                outline:none;transition:border-color 0.2s ease, background 0.2s ease;
+                box-sizing:border-box;
+                min-height:48px;
+            }
+            input[type=text]:focus, input[type=password]:focus, select:focus{border-color:rgba(79,70,229,0.7);background:rgba(255,255,255,0.08);}
+            select option{background:#071021;color:#e6eef8;}
+            select::-ms-expand{display:none;}
+            button, input[type=submit]{padding:12px 18px;border-radius:14px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-soft));color:white;cursor:pointer;font-weight:700;transition:transform 0.18s ease, box-shadow 0.18s ease;}
+            button:hover, input[type=submit]:hover{transform:translateY(-1px);box-shadow:0 18px 40px rgba(79,70,229,0.22);}
 
-h2{
-    margin-bottom:20px;
-}
+            .list{max-height:calc(100vh - 320px);overflow:auto;display:grid;gap:10px;}
+            .activity-item, .list-item{
+                padding:14px;
+                border-radius:14px;
+                border:1px solid rgba(255,255,255,0.06);
+                background:rgba(255,255,255,0.04);
+                color:#e6eef8;
+                box-shadow:inset 0 0 0 1px rgba(255,255,255,0.01);
+            }
+            .list-item button{margin-top:10px;}
+            .activity-item{font-size:14px;line-height:1.6;}
 
-.subtitle{
-    text-align:center;
-    margin-bottom:30px;
-    color:#cbd5e1;
-}
+            .hidden{display:none !important;}
+            #authPage{max-width:920px;margin:40px auto;}
+            .auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+            footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center;}
+        </style>
+    </head>
+    <body>
 
-input[type="text"],
-input[type="password"]{
-    width:100%;
-    padding:14px;
-    margin-bottom:15px;
-    border:none;
-    border-radius:12px;
-    background:rgba(255,255,255,0.1);
-    color:white;
-}
+        <div id="authPage">
+            <div style="max-width:900px;margin:40px auto;padding:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                    <div>
+                        <div style="font-weight:800;font-size:20px;color:var(--accent)">VendorBridge</div>
+                        <div style="color:var(--muted);margin-top:6px">Procurement & Vendor Management</div>
+                    </div>
+                    <div style="text-align:right;color:var(--muted)">Sign up with a role to get started</div>
+                </div>
 
-input[type="submit"],
-button{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:12px;
-    background:linear-gradient(45deg,#3b82f6,#8b5cf6);
-    color:white;
-    cursor:pointer;
-    font-weight:bold;
-}
+                <div class="auth-grid">
+                    <div class="card">
+                        <h3>Login</h3>
+                        <form id="loginForm">
+                            <input type="text" id="email" name="email" autocomplete="email" placeholder="Email">
+                            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Password">
+                            <button type="submit">Sign in</button>
+                        </form>
+                        <div style="margin-top:8px;color:var(--muted);font-size:13px">Use your account to access vendors, RFQs, quotations and approvals.</div>
+                    </div>
 
-.store{
-    display:none;
-}
+                    <div class="card">
+                        <h3>Create account</h3>
+                        <form id="signupForm">
+                            <input type="text" id="new_email" name="new_email" autocomplete="email" placeholder="Email">
+                            <input type="password" id="new_password" name="new_password" autocomplete="new-password" placeholder="Password">
+                            <select id="role" name="role" aria-label="Role">
+                                <option value="vendor">Vendor</option>
+                                <option value="procurement_officer">Procurement Officer</option>
+                                <option value="manager">Manager</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                            <button type="submit">Create account</button>
+                        </form>
+                        <div style="margin-top:8px;color:var(--muted);font-size:13px">Choose an appropriate role. Admins have full access.</div>
+                    </div>
+                </div>
 
-.products{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-    gap:20px;
-    margin-top:30px;
-}
-
-.product{
-    background:rgba(255,255,255,0.08);
-    padding:20px;
-    border-radius:20px;
-}
-
-.price{
-    color:#60a5fa;
-    font-size:22px;
-    margin:10px 0;
-}
-</style>
-</head>
-<body>
-
-<div class="wrapper">
-
-    <!-- LOGIN / SIGNUP -->
-    <div id="authPage">
-
-        <h1>LOGIN / SIGNUP</h1>
-        <p class="subtitle">JWT Authentication Demo</p>
-
-        <div class="container">
-
-            <div class="card">
-
-                <h2>Login</h2>
-
-                <form id="loginForm">
-
-                    <input
-                        type="text"
-                        id="email"
-                        placeholder="Enter Email"
-                    >
-
-                    <input
-                        type="password"
-                        id="password"
-                        placeholder="Enter Password"
-                    >
-
-                    <input
-                        type="submit"
-                        value="Login"
-                    >
-
-                </form>
-
+                <footer>Built-in demo UI — VendorBridge</footer>
             </div>
-
-            <div class="card">
-
-                <h2>Create Account</h2>
-
-                <form id="signupForm">
-
-                    <input
-                        type="text"
-                        id="new_email"
-                        placeholder="Enter Email"
-                    >
-
-                    <input
-                        type="password"
-                        id="new_password"
-                        placeholder="Create Password"
-                    >
-
-                    <input
-                        type="submit"
-                        value="Sign Up"
-                    >
-
-                </form>
-
-            </div>
-
         </div>
 
-    </div>
+        <div class="app" style="display:none" id="storePage">
+            <aside class="sidebar">
+                <div class="brand">Vendor<span>Bridge</span></div>
+                <nav class="nav">
+                    <a href="#" class="active" id="nav-dashboard">Dashboard</a>
+                    <a href="#" id="nav-vendors">Vendors</a>
+                    <a href="#" id="nav-rfqs">RFQs</a>
+                    <a href="#" id="nav-quotations">Quotations</a>
+                    <a href="#" id="nav-pos">Purchase Orders</a>
+                    <a href="#" id="nav-invoices">Invoices</a>
+                    <a href="#" id="nav-activity">Activity</a>
+                    <a href="#" id="nav-reports">Reports</a>
+                    <a href="#" id="nav-profile">Profile</a>
+                    <a href="#" onclick="logout()">Logout</a>
+                </nav>
+                <div class="status-pill" id="statusRole">Role: vendor</div>
+            </aside>
 
-    <!-- STORE PAGE -->
-    <div id="storePage" class="store">
+            <main class="main">
+                <div>
+                    <div class="topbar">
+                        <div>
+                            <div class="welcome" id="welcomeText">Welcome</div>
+                            <div class="role" id="roleText"></div>
+                        </div>
+                        <div>
+                            <input id="searchInput" type="text" placeholder="Search RFQs, vendors..." style="padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04);color:inherit;min-width:320px;">
+                        </div>
+                    </div>
 
-        <h1>🛒 ONLINE STORE</h1>
+                    <div class="page-grid">
+                        <div class="page-content">
+                            <section class="card" id="dashboardPage">
+                                <header>
+                                    <div>
+                                        <div class="label">Overview</div>
+                                        <h3>Dashboard</h3>
+                                    </div>
+                                </header>
+                                <div class="summary-grid">
+                                    <div class="summary-item"><span class="summary-label">Vendors</span><span class="summary-value" id="dashVendors">0</span></div>
+                                    <div class="summary-item"><span class="summary-label">RFQs</span><span class="summary-value" id="dashRfqs">0</span></div>
+                                    <div class="summary-item"><span class="summary-label">Quotations</span><span class="summary-value" id="dashQuotes">0</span></div>
+                                    <div class="summary-item"><span class="summary-label">Orders</span><span class="summary-value" id="dashPos">0</span></div>
+                                    <div class="summary-item" style="grid-column:1/-1;"><span class="summary-label">Invoices</span><span class="summary-value" id="dashInvoices">0</span></div>
+                                </div>
+                                <div class="list" id="dashboardHighlights">
+                                    <div class="activity-item">Use the menu to navigate between Vendors, RFQs, Quotations, Purchase Orders and Invoices.</div>
+                                </div>
+                            </section>
 
-        <h2 id="welcomeText"></h2>
+                            <section class="card hidden" id="vendorsPage">
+                                <header>
+                                    <div>
+                                        <div class="label">Suppliers</div>
+                                        <h3>Vendors</h3>
+                                    </div>
+                                </header>
+                                <form id="vendorForm">
+                                    <div class="row"><input type="text" id="vendor_name" placeholder="Vendor name"></div>
+                                    <div class="row"><input type="text" id="vendor_category" placeholder="Vendor category"></div>
+                                    <div class="row"><input type="text" id="vendor_gst" placeholder="GST Number"></div>
+                                    <div class="row"><input type="text" id="vendor_phone" placeholder="Phone"></div>
+                                    <div class="row"><input type="text" id="vendor_email" placeholder="Contact email"></div>
+                                    <div class="row"><input type="text" id="vendor_address" placeholder="Address"></div>
+                                    <div class="row"><input type="submit" value="Create Vendor"></div>
+                                </form>
+                                <div class="list" id="vendorsList"></div>
+                            </section>
 
-        <div class="products">
+                            <section class="card hidden" id="rfqsPage">
+                                <header>
+                                    <div>
+                                        <div class="label">Sourcing</div>
+                                        <h3>RFQs</h3>
+                                    </div>
+                                </header>
+                                <form id="rfqForm">
+                                    <div class="row"><input type="text" id="rfq_title" placeholder="Title"></div>
+                                    <div class="row"><input type="text" id="rfq_description" placeholder="Description"></div>
+                                    <div class="row"><input type="text" id="rfq_vendor_id" placeholder="Vendor ID (optional)"></div>
+                                    <div class="row"><input type="date" id="rfq_deadline" placeholder="Deadline"></div>
+                                    <div class="row"><input type="text" id="rfq_attachment" placeholder="Attachment URL"></div>
+                                    <div class="row"><input type="submit" value="Create RFQ"></div>
+                                </form>
+                                <div class="list" id="rfqsList"></div>
+                            </section>
 
-            <div class="product">
-                <h3>iPhone 17</h3>
-                <div class="price">₹79,999</div>
-                <button>Buy Now</button>
-            </div>
+                            <section class="card hidden" id="quotationsPage">
+                                <header>
+                                    <div>
+                                        <div class="label">Offers</div>
+                                        <h3>Quotations</h3>
+                                    </div>
+                                </header>
+                                <form id="quotationForm">
+                                    <div class="row"><input type="text" id="quote_rfq_id" placeholder="RFQ ID"></div>
+                                    <div class="row"><input type="text" id="quote_vendor_id" placeholder="Vendor ID"></div>
+                                    <div class="row"><input type="text" id="quote_amount" placeholder="Amount"></div>
+                                    <div class="row"><input type="text" id="quote_timeline" placeholder="Delivery timeline"></div>
+                                    <div class="row"><input type="text" id="quote_comments" placeholder="Quotation comments"></div>
+                                    <div class="row"><input type="text" id="quote_details" placeholder="Details"></div>
+                                    <div class="row"><input type="submit" value="Submit Quotation"></div>
+                                </form>
+                                <div class="list" id="quotationsList"></div>
+                            </section>
 
-            <div class="product">
-                <h3>Gaming Laptop</h3>
-                <div class="price">₹89,999</div>
-                <button>Buy Now</button>
-            </div>
+                            <section class="card hidden" id="posPage">
+                                <header>
+                                    <div>
+                                        <div class="label">Execution</div>
+                                        <h3>Purchase Orders</h3>
+                                    </div>
+                                </header>
+                                <form id="poForm">
+                                    <div class="row"><input type="text" id="po_quotation_id" placeholder="Quotation ID"></div>
+                                    <div class="row"><input type="submit" value="Generate PO"></div>
+                                </form>
+                                <div class="list" id="posList"></div>
+                            </section>
 
-            <div class="product">
-                <h3>AirPods Pro</h3>
-                <div class="price">₹19,999</div>
-                <button>Buy Now</button>
-            </div>
+                            <section class="card hidden" id="invoicesPage">
+                                <header>
+                                    <div>
+                                        <div class="label">Finance</div>
+                                        <h3>Invoices</h3>
+                                    </div>
+                                </header>
+                                <form id="invoiceForm">
+                                    <div class="row"><input type="text" id="invoice_po_id" placeholder="PO ID"></div>
+                                    <div class="row"><input type="submit" value="Generate Invoice"></div>
+                                </form>
+                                <div class="list" id="invoicesList"></div>
+                            </section>
 
+                            <section class="card hidden" id="activityPage">
+                                <header>
+                                    <div>
+                                        <div class="label">Operations</div>
+                                        <h3>Activity Logs</h3>
+                                    </div>
+                                </header>
+                                <div class="list" id="activityLogsList"></div>
+                            </section>
+
+                            <section class="card hidden" id="reportsPage">
+                                <header>
+                                    <div>
+                                        <div class="label">Insights</div>
+                                        <h3>Reports & Analytics</h3>
+                                    </div>
+                                </header>
+                                <div class="summary-grid" id="reportsSummary"></div>
+                                <div class="list" id="reportsDetails"></div>
+                            </section>
+
+                            <section class="card hidden" id="profilePage">
+                                <header>
+                                    <div>
+                                        <div class="label">Account</div>
+                                        <h3>Profile</h3>
+                                    </div>
+                                </header>
+                                <div class="list">
+                                    <div class="activity-item">Role: <span id="profileRole">vendor</span></div>
+                                    <div class="activity-item">Email is available after login.</div>
+                                    <div class="activity-item">Use the sidebar to switch pages and manage content.</div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="workspace-panel">
+                    <section class="card summary-card">
+                        <header>
+                            <div>
+                                <div class="label">Workspace</div>
+                                <h3>Summary</h3>
+                            </div>
+                        </header>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <span class="summary-label">Vendors</span>
+                                <span class="summary-value" id="countVendors">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">RFQs</span>
+                                <span class="summary-value" id="countRfqs">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Quotations</span>
+                                <span class="summary-value" id="countQuotes">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Orders</span>
+                                <span class="summary-value" id="countPos">0</span>
+                            </div>
+                            <div class="summary-item" style="grid-column:1/-1;">
+                                <span class="summary-label">Invoices</span>
+                                <span class="summary-value" id="countInvoices">0</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="card activity-card">
+                        <header>
+                            <div>
+                                <div class="label">Updates</div>
+                                <h3>Recent activity</h3>
+                            </div>
+                        </header>
+                        <div class="list" id="activityFeed"></div>
+                    </section>
+
+                    <section class="card search-card">
+                        <header>
+                            <div>
+                                <div class="label">Search</div>
+                                <h3>Search results</h3>
+                            </div>
+                        </header>
+                        <div class="list" id="searchResults"></div>
+                    </section>
+
+                    <section class="card detail-card">
+                        <header>
+                            <div>
+                                <div class="label">Latest creation</div>
+                                <h3>Details</h3>
+                            </div>
+                        </header>
+                        <div class="list" id="detailView"></div>
+                    </section>
+                </aside>
+            </main>
         </div>
 
-        <br>
+        <script>
+const roleConfig = {
+    admin: {
+        pages: ['vendorsPage', 'rfqsPage', 'quotationsPage', 'posPage', 'invoicesPage', 'activityPage', 'reportsPage'],
+        nav: ['nav-dashboard', 'nav-vendors', 'nav-rfqs', 'nav-quotations', 'nav-pos', 'nav-invoices', 'nav-activity', 'nav-reports', 'nav-profile'],
+        create: ['vendor', 'rfq', 'quotation', 'po', 'invoice']
+    },
+    manager: {
+        pages: ['vendorsPage', 'rfqsPage', 'quotationsPage', 'posPage', 'invoicesPage', 'activityPage', 'reportsPage'],
+        nav: ['nav-dashboard', 'nav-vendors', 'nav-rfqs', 'nav-quotations', 'nav-pos', 'nav-invoices', 'nav-activity', 'nav-reports', 'nav-profile'],
+        create: ['vendor', 'rfq', 'quotation', 'po', 'invoice']
+    },
+    procurement_officer: {
+        pages: ['vendorsPage', 'rfqsPage', 'quotationsPage', 'activityPage', 'reportsPage'],
+        nav: ['nav-dashboard', 'nav-vendors', 'nav-rfqs', 'nav-quotations', 'nav-activity', 'nav-reports', 'nav-profile'],
+        create: ['vendor', 'rfq', 'quotation']
+    },
+    vendor: {
+        pages: ['rfqsPage', 'quotationsPage', 'activityPage'],
+        nav: ['nav-dashboard', 'nav-rfqs', 'nav-quotations', 'nav-activity', 'nav-profile'],
+        create: ['quotation']
+    }
+};
 
-        <button onclick="logout()">
-            Logout
-        </button>
+const navIds = ['nav-dashboard', 'nav-vendors', 'nav-rfqs', 'nav-quotations', 'nav-pos', 'nav-invoices', 'nav-activity', 'nav-reports', 'nav-profile'];
+const createForms = {
+    vendor: 'vendorForm',
+    rfq: 'rfqForm',
+    quotation: 'quotationForm',
+    po: 'poForm',
+    invoice: 'invoiceForm'
+};
 
-    </div>
+const currentData = {
+    vendors: [],
+    rfqs: [],
+    quotes: [],
+    pos: [],
+    invoices: []
+    , activityLogs: [],
+    reports: {}
+};
 
-</div>
+let lastCreated = null;
 
-<script>
+function setLastCreated(type, item){
+    lastCreated = { type, item };
+    renderDetailView();
+}
 
-async function checkToken(){
+function formatObjectDetails(obj){
+    return Object.entries(obj).map(([key, value]) => {
+        return `<div style="margin-bottom:8px"><strong>${key.replace(/_/g, ' ')}:</strong> ${value ?? ''}</div>`;
+    }).join('');
+}
 
-    const token = localStorage.getItem("token");
+function renderDetailView(){
+    const target = document.getElementById('detailView');
+    if(!target) return;
+    target.innerHTML = '';
+    if(!lastCreated){
+        const placeholder = document.createElement('div');
+        placeholder.className = 'activity-item';
+        placeholder.textContent = 'Create a vendor, RFQ, quotation, PO, or invoice to see details here.';
+        target.appendChild(placeholder);
+        return;
+    }
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+    item.innerHTML = `<div style="margin-bottom:10px;font-weight:700">${lastCreated.type} created</div>` + formatObjectDetails(lastCreated.item);
+    target.appendChild(item);
+}
 
-    if(!token){
+function renderSearchResults(query){
+    const target = document.getElementById('searchResults');
+    if(!target) return;
+    target.innerHTML = '';
+    const value = query ? query.toLowerCase().trim() : '';
+    if(!value){
+        const placeholder = document.createElement('div');
+        placeholder.className = 'activity-item';
+        placeholder.textContent = 'Start typing to search vendors, RFQs, quotations, purchase orders and invoices.';
+        target.appendChild(placeholder);
         return;
     }
 
-    try{
-
-        const response =
-        await fetch(
-            "http://127.0.0.1:8000/profile",
-            {
-                headers:{
-                    Authorization:
-                    "Bearer " + token
-                }
-            }
-        );
-
-        const data = await response.json();
-
-        if(data.success){
-
-            document
-            .getElementById("authPage")
-            .style.display = "none";
-
-            document
-            .getElementById("storePage")
-            .style.display = "block";
-
-            document
-            .getElementById("welcomeText")
-            .innerText =
-            "Welcome " + data.email;
+    const results = [];
+    currentData.vendors.forEach(v => {
+        if(v.name?.toLowerCase().includes(value) || v.contact_email?.toLowerCase().includes(value) || (v.address?.toLowerCase().includes(value)) || `${v.id}` === value){
+            results.push({ title: `Vendor: ${v.name}`, body: `ID: ${v.id} · ${v.contact_email || ''}`, details: formatObjectDetails(v) });
         }
+    });
+    currentData.rfqs.forEach(r => {
+        if(r.title?.toLowerCase().includes(value) || r.description?.toLowerCase().includes(value) || `${r.id}` === value || `${r.vendor_id}` === value){
+            results.push({ title: `RFQ: ${r.title}`, body: `ID: ${r.id} · Vendor: ${r.vendor_id}`, details: formatObjectDetails(r) });
+        }
+    });
+    currentData.quotes.forEach(q => {
+        if(`${q.id}` === value || `${q.rfq_id}` === value || `${q.vendor_id}` === value || q.status?.toLowerCase().includes(value) || `${q.amount}` === value){
+            results.push({ title: `Quotation ID: ${q.id}`, body: `RFQ: ${q.rfq_id} · Vendor: ${q.vendor_id} · Status: ${q.status}`, details: formatObjectDetails(q) });
+        }
+    });
+    currentData.pos.forEach(p => {
+        if(p.po_number?.toLowerCase().includes(value) || `${p.id}` === value || `${p.quotation_id}` === value || `${p.vendor_id}` === value){
+            results.push({ title: `Purchase Order: ${p.po_number}`, body: `ID: ${p.id} · Vendor: ${p.vendor_id}`, details: formatObjectDetails(p) });
+        }
+    });
+    currentData.invoices.forEach(i => {
+        if(i.invoice_number?.toLowerCase().includes(value) || `${i.id}` === value || `${i.po_id}` === value || i.status?.toLowerCase().includes(value)){
+            results.push({ title: `Invoice: ${i.invoice_number}`, body: `ID: ${i.id} · Status: ${i.status}`, details: formatObjectDetails(i) });
+        }
+    });
 
-    }catch(err){
-
-        localStorage.removeItem("token");
+    if(results.length === 0){
+        const empty = document.createElement('div');
+        empty.className = 'activity-item';
+        empty.textContent = 'No matching records found.';
+        target.appendChild(empty);
+        return;
     }
+
+    results.slice(0, 8).forEach(result => {
+        const item = document.createElement('div');
+        item.className = 'list-item';
+        item.innerHTML = `<div><strong>${result.title}</strong><div style="margin-top:6px;color:var(--muted);font-size:13px">${result.body}</div><div style="margin-top:10px;color:var(--muted);font-size:13px">${result.details}</div></div>`;
+        target.appendChild(item);
+    });
+}
+
+function handleSearch(event){
+    renderSearchResults(event.target.value);
+}
+
+async function checkToken(){
+    const token = localStorage.getItem('token');
+    if(!token) return;
+    try{
+        const response = await fetch('http://127.0.0.1:8000/profile', { headers: { Authorization: 'Bearer ' + token }});
+        const data = await response.json();
+        if(data.success){
+            document.getElementById('authPage').style.display = 'none';
+            document.getElementById('storePage').style.display = 'grid';
+            document.getElementById('welcomeText').innerText = 'Welcome ' + data.email;
+            const role = data.role || localStorage.getItem('role') || 'vendor';
+            localStorage.setItem('role', role);
+            document.getElementById('roleText').innerText = 'Role: ' + role;
+            document.getElementById('statusRole').innerText = 'Role: ' + role;
+            document.getElementById('profileRole').innerText = role;
+            applyRoleVisibility(role);
+            await loadAll();
+            showPage('dashboardPage');
+        }
+    }catch(err){ localStorage.removeItem('token'); }
 }
 
 checkToken();
+setupNavigation();
+document.getElementById('searchInput').addEventListener('input', handleSearch);
 
-document
-.getElementById("loginForm")
-.addEventListener("submit", async function(e){
-
+document.getElementById('loginForm').addEventListener('submit', async function(e){
     e.preventDefault();
-
     const formData = new FormData();
-
-    formData.append(
-        "email",
-        document.getElementById("email").value
-    );
-
-    formData.append(
-        "password",
-        document.getElementById("password").value
-    );
-
-    const response =
-    await fetch(
-        "http://127.0.0.1:8000/login",
-        {
-            method:"POST",
-            body:formData
-        }
-    );
-
+    formData.append('email', document.getElementById('email').value);
+    formData.append('password', document.getElementById('password').value);
+    const response = await fetch('http://127.0.0.1:8000/login', { method:'POST', body:formData });
     const data = await response.json();
-
     if(data.success){
-
-        localStorage.setItem(
-            "token",
-            data.access_token
-        );
-
+        localStorage.setItem('token', data.access_token);
+        localStorage.setItem('role', data.role || 'vendor');
         location.reload();
-
-    }else{
-
+    } else {
         alert(data.message);
     }
-
 });
 
-document
-.getElementById("signupForm")
-.addEventListener("submit", async function(e){
-
+document.getElementById('signupForm').addEventListener('submit', async function(e){
     e.preventDefault();
-
     const formData = new FormData();
-
-    formData.append(
-        "new_email",
-        document.getElementById("new_email").value
-    );
-
-    formData.append(
-        "new_password",
-        document.getElementById("new_password").value
-    );
-
-    const response =
-    await fetch(
-        "http://127.0.0.1:8000/signup",
-        {
-            method:"POST",
-            body:formData
-        }
-    );
-
+    formData.append('new_email', document.getElementById('new_email').value);
+    formData.append('new_password', document.getElementById('new_password').value);
+    formData.append('role', document.getElementById('role').value);
+    const response = await fetch('http://127.0.0.1:8000/signup', { method:'POST', body:formData });
     const data = await response.json();
-
     alert(data.message);
-
 });
 
-function logout(){
-
-    localStorage.removeItem("token");
-
-    location.reload();
+function authHeaders(){
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: 'Bearer ' + token } : {};
 }
 
+function showPage(pageId){
+    const sections = ['dashboardPage','vendorsPage','rfqsPage','quotationsPage','posPage','invoicesPage','activityPage','reportsPage','profilePage'];
+    sections.forEach(id => {
+        const section = document.getElementById(id);
+        if(section){ section.classList.toggle('hidden', id !== pageId); }
+    });
+    navIds.forEach(navId => {
+        const link = document.getElementById(navId);
+        if(link){
+            const shouldBeActive = navId === 'nav-' + pageId.replace('Page', '');
+            link.classList.toggle('active', shouldBeActive);
+        }
+    });
+}
+
+function setupNavigation(){
+    navIds.forEach(navId => {
+        const link = document.getElementById(navId);
+        if(link){
+            link.addEventListener('click', function(e){
+                e.preventDefault();
+                const pageKey = navId.replace('nav-', '') + 'Page';
+                showPage(pageKey);
+            });
+        }
+    });
+}
+
+function applyRoleVisibility(role){
+    const config = roleConfig[role] || roleConfig.vendor;
+    Object.keys(createForms).forEach(action => {
+        const form = document.getElementById(createForms[action]);
+        if(form){
+            form.style.display = config.create.includes(action) ? 'block' : 'none';
+        }
+    });
+    const pages = ['vendorsPage', 'rfqsPage', 'quotationsPage', 'posPage', 'invoicesPage', 'activityPage', 'reportsPage'];
+    pages.forEach(page => {
+        const element = document.getElementById(page);
+        if(element){ element.classList.toggle('hidden', !config.pages.includes(page)); }
+    });
+    navIds.forEach(navId => {
+        const link = document.getElementById(navId);
+        if(link){ link.classList.toggle('hidden', !config.nav.includes(navId)); }
+    });
+    document.getElementById('statusRole').innerText = 'Role: ' + role;
+    document.getElementById('roleText').innerText = 'Role: ' + role;
+    document.getElementById('profileRole').innerText = role;
+    showPage('dashboardPage');
+}
+
+function updateSummary(){
+    document.getElementById('countVendors').innerText = currentData.vendors.length;
+    document.getElementById('countRfqs').innerText = currentData.rfqs.length;
+    document.getElementById('countQuotes').innerText = currentData.quotes.length;
+    document.getElementById('countPos').innerText = currentData.pos.length;
+    document.getElementById('countInvoices').innerText = currentData.invoices.length;
+    document.getElementById('dashVendors').innerText = currentData.vendors.length;
+    document.getElementById('dashRfqs').innerText = currentData.rfqs.length;
+    document.getElementById('dashQuotes').innerText = currentData.quotes.length;
+    document.getElementById('dashPos').innerText = currentData.pos.length;
+    document.getElementById('dashInvoices').innerText = currentData.invoices.length;
+    renderActivity();
+}
+
+function pushActivity(message){
+    const feed = document.getElementById('activityFeed');
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+    item.textContent = message;
+    feed.prepend(item);
+    while(feed.children.length > 6){ feed.removeChild(feed.lastChild); }
+}
+
+function renderActivity(){
+    const feed = document.getElementById('activityFeed');
+    feed.innerHTML = '';
+    const recent = [];
+    currentData.rfqs.slice(-2).reverse().forEach(item => recent.push(`RFQ ready: ${item.title} (id:${item.id})`));
+    currentData.quotes.slice(-2).reverse().forEach(item => recent.push(`Quotation submitted for RFQ ${item.rfq_id} — ${item.amount}`));
+    currentData.pos.slice(-2).reverse().forEach(item => recent.push(`PO generated: ${item.po_number}`));
+    currentData.invoices.slice(-2).reverse().forEach(item => recent.push(`Invoice created: ${item.invoice_number}`));
+    currentData.vendors.slice(-2).reverse().forEach(item => recent.push(`Vendor added: ${item.name}`));
+    if(recent.length === 0){
+        const placeholder = document.createElement('div');
+        placeholder.className = 'activity-item';
+        placeholder.textContent = 'No recent activity yet. Create something to see updates here.';
+        feed.appendChild(placeholder);
+        return;
+    }
+    recent.slice(0, 6).forEach(message => {
+        const item = document.createElement('div');
+        item.className = 'activity-item';
+        item.textContent = message;
+        feed.appendChild(item);
+    });
+}
+
+async function loadActivityLogs(){
+    const headers = authHeaders();
+    try{
+        const res = await fetch('http://127.0.0.1:8000/activity_logs', { headers });
+        currentData.activityLogs = await res.json();
+        const container = document.getElementById('activityLogsList');
+        if(container){
+            container.innerHTML = '';
+            if(currentData.activityLogs.length === 0){
+                const placeholder = document.createElement('div');
+                placeholder.className = 'activity-item';
+                placeholder.textContent = 'No activity available yet.';
+                container.appendChild(placeholder);
+            } else {
+                currentData.activityLogs.forEach(event => {
+                    const item = document.createElement('div');
+                    item.className = 'activity-item';
+                    item.innerHTML = `<strong>${event.message}</strong><div style="margin-top:6px;color:var(--muted);font-size:13px">${event.timestamp || ''}</div>`;
+                    container.appendChild(item);
+                });
+            }
+        }
+    } catch (err) { currentData.activityLogs = []; }
+}
+
+function renderReports(){
+    const summary = document.getElementById('reportsSummary');
+    const details = document.getElementById('reportsDetails');
+    if(!summary || !details) return;
+    const data = currentData.reports || {};
+    summary.innerHTML = `
+        <div class="summary-item"><span class="summary-label">Vendors</span><span class="summary-value">${data.total_vendors ?? 0}</span></div>
+        <div class="summary-item"><span class="summary-label">RFQs</span><span class="summary-value">${data.total_rfqs ?? 0}</span></div>
+        <div class="summary-item"><span class="summary-label">Quotations</span><span class="summary-value">${data.total_quotations ?? 0}</span></div>
+        <div class="summary-item"><span class="summary-label">Purchase Orders</span><span class="summary-value">${data.total_pos ?? 0}</span></div>
+        <div class="summary-item"><span class="summary-label">Invoices</span><span class="summary-value">${data.total_invoices ?? 0}</span></div>
+    `;
+    details.innerHTML = `
+        <div class="activity-item"><strong>Approved quotations:</strong> ${data.approved_quotations ?? 0}</div>
+        <div class="activity-item"><strong>Rejected quotations:</strong> ${data.rejected_quotations ?? 0}</div>
+        <div class="activity-item"><strong>Top vendor by quotes:</strong> ${data.top_vendor_by_quotes || 'N/A'}</div>
+    `;
+}
+
+async function loadReports(){
+    const headers = authHeaders();
+    try{
+        const res = await fetch('http://127.0.0.1:8000/reports', { headers });
+        currentData.reports = await res.json();
+        renderReports();
+    } catch (err) { currentData.reports = {}; }
+}
+
+async function loadAll(){
+    const headers = authHeaders();
+    const role = localStorage.getItem('role') || 'vendor';
+    const config = roleConfig[role] || roleConfig.vendor;
+
+    if(config.pages.includes('vendorsPage')){
+        try{
+            const res = await fetch('http://127.0.0.1:8000/vendors', { headers });
+            currentData.vendors = await res.json();
+            const container = document.getElementById('vendorsList');
+            container.innerHTML = '';
+            const canDelete = ['admin','manager'].includes(role);
+            currentData.vendors.forEach(v => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `<div><strong>${v.name}</strong> <span style="color:var(--muted);font-size:13px">id:${v.id}</span><div style="margin-top:8px;color:var(--muted);font-size:13px">${v.category ? 'Category: ' + v.category + ' · ' : ''}${v.contact_email || ''}</div><div style="margin-top:6px;color:var(--muted);font-size:13px">GST: ${v.gst_number || 'N/A'} · Phone: ${v.phone || 'N/A'}</div></div>`;
+                if(canDelete){
+                    const deleteButton = document.createElement('button');
+                    deleteButton.innerText = 'Delete';
+                    deleteButton.addEventListener('click', async () => {
+                        if(!confirm('Delete vendor?')) return;
+                        await fetch(`http://127.0.0.1:8000/vendors/${v.id}`, { method:'DELETE', headers });
+                        await loadAll();
+                    });
+                    item.appendChild(deleteButton);
+                }
+                container.appendChild(item);
+            });
+        } catch (err) { currentData.vendors = []; }
+    } else {
+        currentData.vendors = [];
+    }
+
+    if(config.pages.includes('rfqsPage')){
+        try{
+            const res = await fetch('http://127.0.0.1:8000/rfqs', { headers });
+            currentData.rfqs = await res.json();
+            const container = document.getElementById('rfqsList');
+            container.innerHTML = '';
+            currentData.rfqs.forEach(r => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `<div><strong>${r.title}</strong> <span style="color:var(--muted);font-size:13px">id:${r.id}</span><div style="margin-top:8px;color:var(--muted);font-size:13px">${r.description || ''}</div><div style="margin-top:6px;color:var(--muted);font-size:13px">Vendor: ${r.vendor_id || 'Any'} · Deadline: ${r.deadline ? new Date(r.deadline).toLocaleDateString() : 'Not set'}</div><div style="margin-top:6px;color:var(--muted);font-size:13px">Attachment: ${r.attachment_url || 'None'}</div></div>`;
+                container.appendChild(item);
+            });
+        } catch (err) { currentData.rfqs = []; }
+    } else {
+        currentData.rfqs = [];
+    }
+
+    if(config.pages.includes('quotationsPage')){
+        try{
+            const res = await fetch('http://127.0.0.1:8000/quotations', { headers });
+            currentData.quotes = await res.json();
+            const container = document.getElementById('quotationsList');
+            container.innerHTML = '';
+            currentData.quotes.forEach(q => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `<div><strong>Quotation</strong> <span style="color:var(--muted);font-size:13px">id:${q.id}</span><div style="margin-top:8px;color:var(--muted);font-size:13px">RFQ:${q.rfq_id} Vendor:${q.vendor_id} Amount:${q.amount} Status:${q.status}</div><div style="margin-top:6px;color:var(--muted);font-size:13px">Timeline: ${q.delivery_timeline || 'N/A'} · Comments: ${q.comments || 'N/A'}</div><div style="margin-top:8px;color:var(--muted);font-size:13px">${q.details || ''}</div></div>`;
+                if(['admin','manager','procurement_officer'].includes(role)){
+                    const approveButton = document.createElement('button');
+                    approveButton.innerText = 'Approve';
+                    approveButton.style.marginRight = '8px';
+                    approveButton.addEventListener('click', async () => {
+                        const form = new FormData();
+                        form.append('comments', 'Approved from UI');
+                        await fetch(`http://127.0.0.1:8000/quotations/${q.id}/approve`, { method:'POST', body:form, headers });
+                        await loadAll();
+                    });
+                    const rejectButton = document.createElement('button');
+                    rejectButton.innerText = 'Reject';
+                    rejectButton.addEventListener('click', async () => {
+                        const form = new FormData();
+                        form.append('comments', 'Rejected from UI');
+                        await fetch(`http://127.0.0.1:8000/quotations/${q.id}/reject`, { method:'POST', body:form, headers });
+                        await loadAll();
+                    });
+                    item.appendChild(approveButton);
+                    item.appendChild(rejectButton);
+                }
+                container.appendChild(item);
+            });
+        } catch (err) { currentData.quotes = []; }
+    } else {
+        currentData.quotes = [];
+    }
+
+    if(config.pages.includes('posPage')){
+        try{
+            const res = await fetch('http://127.0.0.1:8000/purchase_orders', { headers });
+            currentData.pos = await res.json();
+            const container = document.getElementById('posList');
+            container.innerHTML = '';
+            currentData.pos.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerText = `PO ${p.po_number} (id:${p.id}) Quotation:${p.quotation_id} Vendor:${p.vendor_id} Amount:${p.amount}`;
+                container.appendChild(item);
+            });
+        } catch (err) { currentData.pos = []; }
+    } else {
+        currentData.pos = [];
+    }
+
+    if(config.pages.includes('invoicesPage')){
+        try{
+            const res = await fetch('http://127.0.0.1:8000/invoices', { headers });
+            currentData.invoices = await res.json();
+            const container = document.getElementById('invoicesList');
+            container.innerHTML = '';
+            currentData.invoices.forEach(i => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `<div><strong>INV ${i.invoice_number}</strong> <span style="color:var(--muted);font-size:13px">id:${i.id}</span><div style="margin-top:8px;color:var(--muted);font-size:13px">PO:${i.po_id} Amount:${i.amount} Status:${i.status}</div><div style="margin-top:6px;color:var(--muted);font-size:13px">Due: ${i.due_date ? new Date(i.due_date).toLocaleDateString() : 'Not set'} · Email sent: ${i.email_sent || 'no'}</div></div>`;
+                const emailButton = document.createElement('button');
+                emailButton.innerText = 'Send Email';
+                emailButton.style.marginRight = '8px';
+                emailButton.addEventListener('click', async () => {
+                    const email = prompt('Enter recipient email for invoice:');
+                    if(!email) return;
+                    const emailForm = new FormData();
+                    emailForm.append('to_email', email);
+                    const response = await fetch(`http://127.0.0.1:8000/invoices/${i.id}/send_email`, { method:'POST', body:emailForm, headers });
+                    const result = await response.json();
+                    alert(result.message || 'Email sent');
+                    await loadAll();
+                });
+                const printButton = document.createElement('button');
+                printButton.innerText = 'Print';
+                printButton.addEventListener('click', () => {
+                    const win = window.open('', '_blank');
+                    if(!win) return;
+                    win.document.write(`<pre>Invoice: ${i.invoice_number}\nPO ID: ${i.po_id}\nAmount: ${i.amount}\nStatus: ${i.status}\nDue: ${i.due_date ? new Date(i.due_date).toLocaleDateString() : 'Not set'}\n</pre>`);
+                    win.document.close();
+                    win.print();
+                });
+                item.appendChild(emailButton);
+                item.appendChild(printButton);
+                container.appendChild(item);
+            });
+        } catch (err) { currentData.invoices = []; }
+    } else {
+        currentData.invoices = [];
+    }
+
+    if(config.pages.includes('activityPage')){
+        await loadActivityLogs();
+    }
+
+    if(config.pages.includes('reportsPage')){
+        await loadReports();
+    }
+
+    updateSummary();
+    renderSearchResults(document.getElementById('searchInput')?.value || '');
+}
+
+document.getElementById('vendorForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const form = new FormData();
+    form.append('name', document.getElementById('vendor_name').value);
+    form.append('category', document.getElementById('vendor_category').value);
+    form.append('gst_number', document.getElementById('vendor_gst').value);
+    form.append('phone', document.getElementById('vendor_phone').value);
+    form.append('contact_email', document.getElementById('vendor_email').value);
+    form.append('address', document.getElementById('vendor_address').value);
+    const res = await fetch('http://127.0.0.1:8000/vendors', { method:'POST', body:form, headers:authHeaders() });
+    const data = await res.json();
+    if(data.success){
+        setLastCreated('Vendor', { name: document.getElementById('vendor_name').value, contact_email: document.getElementById('vendor_email').value, address: document.getElementById('vendor_address').value });
+        pushActivity(`Vendor created: ${document.getElementById('vendor_name').value}`);
+    }
+    alert(data.message || (data.success ? 'Vendor created' : 'Error'));
+    await loadAll();
+});
+
+document.getElementById('rfqForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const form = new FormData();
+    form.append('title', document.getElementById('rfq_title').value);
+    form.append('description', document.getElementById('rfq_description').value);
+    form.append('vendor_id', document.getElementById('rfq_vendor_id').value || '');
+    form.append('deadline', document.getElementById('rfq_deadline').value || '');
+    form.append('attachment_url', document.getElementById('rfq_attachment').value || '');
+    const res = await fetch('http://127.0.0.1:8000/rfqs', { method:'POST', body:form, headers:authHeaders() });
+    const data = await res.json();
+    if(data.success){
+        setLastCreated('RFQ', { title: document.getElementById('rfq_title').value, description: document.getElementById('rfq_description').value, vendor_id: document.getElementById('rfq_vendor_id').value || 'n/a' });
+        pushActivity(`RFQ created: ${document.getElementById('rfq_title').value}`);
+    }
+    alert(data.message || (data.success ? 'RFQ created' : 'Error'));
+    await loadAll();
+});
+
+document.getElementById('quotationForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const form = new FormData();
+    form.append('rfq_id', document.getElementById('quote_rfq_id').value);
+    form.append('vendor_id', document.getElementById('quote_vendor_id').value);
+    form.append('amount', document.getElementById('quote_amount').value);
+    form.append('delivery_timeline', document.getElementById('quote_timeline').value || '');
+    form.append('comments', document.getElementById('quote_comments').value || '');
+    form.append('details', document.getElementById('quote_details').value);
+    const res = await fetch('http://127.0.0.1:8000/quotations', { method:'POST', body:form, headers:authHeaders() });
+    const data = await res.json();
+    if(data.success){
+        setLastCreated('Quotation', { rfq_id: document.getElementById('quote_rfq_id').value, vendor_id: document.getElementById('quote_vendor_id').value, amount: document.getElementById('quote_amount').value, status: 'submitted' });
+        pushActivity(`Quotation submitted for RFQ ${document.getElementById('quote_rfq_id').value}`);
+    }
+    alert(data.message || (data.success ? 'Quotation submitted' : 'Error'));
+    await loadAll();
+});
+
+document.getElementById('poForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const form = new FormData();
+    form.append('quotation_id', document.getElementById('po_quotation_id').value);
+    const res = await fetch('http://127.0.0.1:8000/purchase_orders', { method:'POST', body:form, headers:authHeaders() });
+    const data = await res.json();
+    if(data.success){
+        setLastCreated('Purchase Order', { quotation_id: document.getElementById('po_quotation_id').value });
+        pushActivity(`Purchase order generated for quotation ${document.getElementById('po_quotation_id').value}`);
+    }
+    alert(data.message || (data.success ? 'PO generated' : 'Error'));
+    await loadAll();
+});
+
+document.getElementById('invoiceForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const form = new FormData();
+    form.append('po_id', document.getElementById('invoice_po_id').value);
+    const res = await fetch('http://127.0.0.1:8000/invoices', { method:'POST', body:form, headers:authHeaders() });
+    const data = await res.json();
+    if(data.success){
+        setLastCreated('Invoice', { po_id: document.getElementById('invoice_po_id').value });
+        pushActivity(`Invoice created for PO ${document.getElementById('invoice_po_id').value}`);
+    }
+    alert(data.message || (data.success ? 'Invoice generated' : 'Error'));
+    await loadAll();
+});
+
+async function postLoginSetup(){
+    const role = localStorage.getItem('role') || 'vendor';
+    document.getElementById('roleText').innerText = 'Role: ' + role;
+    document.getElementById('statusRole').innerText = 'Role: ' + role;
+    applyRoleVisibility(role);
+    await loadAll();
+    renderSearchResults('');
+    renderDetailView();
+}
+
+if(localStorage.getItem('token')){
+    postLoginSetup();
+}
+
+function logout(){
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    location.reload();
+}
 </script>
 
 </body>
